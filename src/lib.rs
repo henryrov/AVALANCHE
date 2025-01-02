@@ -83,14 +83,14 @@ pub struct Record {
     
 #[derive(PartialEq, Debug, Deserialize, Serialize)]
 pub struct Habit {
-    name: String,
-    records: Vec<Record>,
+    pub name: String,
+    pub records: Vec<Record>,
 }
 
 #[derive(PartialEq, Debug, Deserialize, Serialize)]
 pub struct AppData {
-    version: u16,
-    habits: Vec<Habit>,
+    pub version: u16,
+    pub habits: Vec<Habit>,
 }
 
 impl AppData {

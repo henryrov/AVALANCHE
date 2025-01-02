@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-crossterm = "0.28.1"
-ratatui = "0.29.0"
+cursive = "0.21.1"
+dirs = "5.0.1"
 ron = "0.8.1"
 serde = { version = "1", features = ["derive"] }
