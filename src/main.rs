@@ -1,6 +1,7 @@
 use cursive::Cursive;
 use cursive::views::{Button, Dialog, DummyView, EditView,
-                     LinearLayout, SelectView, Menubar};
+                     LinearLayout, SelectView, Menubar,
+                     ViewRef};
 use cursive::event::Key;
 use cursive::traits::*;
 use dirs::data_dir;
@@ -33,15 +34,15 @@ fn main() {
         .add_delimiter()
         .add_leaf("Delete selection", delete_habit)
         .add_delimiter()
-        .add_leaf("Quit", on_quit);
-
+        .add_leaf("Save", save_data)
+        .add_delimiter()
+        .add_leaf("Quit", Cursive::quit);
     siv.set_autohide_menu(false);
     
     let habit_select = SelectView::<String>::new()
-        .on_submit(on_submit)
+        .on_submit(draw_records_page)
         .with_name("habit_select")
         .scrollable();
-    println!("{}", app_data.habits.len());
 
     siv.add_layer(Dialog::around(LinearLayout::vertical()
                                  .child(Dialog::text(
@@ -64,11 +65,38 @@ fn main() {
     siv.run();
 }
 
+fn draw_habits_menubar(s: &mut Cursive) {
+    s.menubar().clear();
+    s.menubar()
+        .add_leaf("Add habit", add_habit)
+        .add_delimiter()
+        .add_leaf("Delete selection", delete_habit)
+        .add_delimiter()
+        .add_leaf("Save", save_data)
+        .add_delimiter()
+        .add_leaf("Quit", Cursive::quit);
+}
+
+fn draw_records_menubar(s: &mut Cursive) {
+    s.menubar().clear();
+    s.menubar()
+        .add_leaf("Add record", add_record)
+        .add_delimiter()
+        .add_leaf("Delete selection", delete_record)
+        .add_delimiter()
+        .add_leaf("Save", save_data)
+        .add_delimiter()
+        .add_leaf("Back", back)
+        .add_delimiter()
+        .add_leaf("Quit", Cursive::quit);
+}
+
 fn add_habit(s: &mut Cursive) {
     fn ok(s: &mut Cursive, name: &str) {
         s.call_on_name("habit_select", |view: &mut SelectView<String>| {
             view.add_item_str(name)
         });
+        
         match s.user_data::<AppData>() {
             Some(data) => data.habits.push(Habit {
                 name: String::from(name),
@@ -76,6 +104,7 @@ fn add_habit(s: &mut Cursive) {
             }),
             None => panic!(),
         }
+        
         s.pop_layer();
     }
 
@@ -96,37 +125,72 @@ fn add_habit(s: &mut Cursive) {
 }
 
 fn delete_habit(s: &mut Cursive) {
-    let mut select = s.find_name::<SelectView<String>>("habit_select").unwrap();
-    match select.selected_id() {
-        None => s.add_layer(Dialog::info("No name to remove")),
+    fn ok (s: &mut Cursive) {
+        let mut select = s.find_name::<SelectView<String>>("habit_select").unwrap();
+        let selected_id = select.selected_id().unwrap();
+        select.remove_item(selected_id);
+        match s.user_data::<AppData>() {
+            Some(data) => {
+                data.habits.remove(selected_id);
+            },
+            None => panic!(),
+        }
+        
+        s.pop_layer();
+    }
+
+    let select = s.find_name::<SelectView<String>>("habit_select").unwrap();
+    let selected_id = select.selected_id();
+    let data = s.user_data::<AppData>().unwrap();
+    match selected_id {
+        None => s.add_layer(Dialog::info("Nothing selected")),
         Some(focus) => {
-            select.remove_item(focus);
-            match s.user_data::<AppData>() {
-                Some(data) => {
-                    data.habits.remove(focus);
-                },
-                None => panic!(),
-        }
-        }
-    }
+            let habit_name = data.habits[focus].name.clone();
+            s.add_layer(Dialog::around(LinearLayout::horizontal()
+                                       .child(Button::new("Yes", ok))
+                                       .child(DummyView::new())
+                                       .child(Button::new("No", |s| {
+                                           s.pop_layer();
+                                       }))
+            ).title(format!("Delete {}?", habit_name)));
+        },
+    }                                  
 }
 
-fn on_submit(s: &mut Cursive, name: &str) {
-    s.pop_layer();
+fn draw_records_page(s: &mut Cursive, name: &str) {
+    let data = s.user_data::<AppData>().unwrap();
+    let habit = data.find_habit_by_name(name).unwrap();
+
+    draw_records_menubar(s);
+
+    let record_select = SelectView::<LinearLayout>::new()
+        .with_name("record_select")
+        .scrollable();
+    
     s.add_layer(Dialog::text(format!("Name: {}\nAwesome: yes", name))
-        .title(format!("{}'s info", name))
-        .button("Quit", Cursive::quit));
+        .title(format!("{}'s info", name)));
 }
 
-fn on_quit(s: &mut Cursive) {
-    match s.user_data::<AppData>() {
-        Some(data) => data.write_to_file(format!("{}/{}",
-                                                 data_dir()
-                                                 .unwrap().
-                                                 to_str().unwrap(),
-                                                 ".avalanche").as_str())
-            .expect("Failed to write data"),
-        None => panic!("Failed to write data"),
-    }
-    s.quit();
+fn add_record(s: &mut Cursive) {
+
+}
+
+fn delete_record(s: &mut Cursive) {
+
+}
+    
+
+fn back(s: &mut Cursive) {
+    draw_habits_menubar(s);
+    s.pop_layer();
+}
+
+fn save_data(s: &mut Cursive) {
+    let data = s.user_data::<AppData>().unwrap();
+    data.write_to_file(format!("{}/{}",
+                               data_dir()
+                               .unwrap().
+                               to_str().unwrap(),
+                               ".avalanche").as_str())
+        .expect("Failed to write data")
 }

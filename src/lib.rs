@@ -94,6 +94,15 @@ pub struct AppData {
 }
 
 impl AppData {
+    pub fn find_habit_by_name(&self, name: &str) -> Option<&Habit> {
+        for habit in &self.habits {
+            if habit.name == name {
+                return Some(habit);
+            }
+        }
+        None
+    }
+    
     pub fn write_to_file(&self, filename: &str)
                          -> Result<(), Box<dyn Error>> {
         let mut file = fs::File::create(filename)?;
