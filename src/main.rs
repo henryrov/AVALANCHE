@@ -1,10 +1,11 @@
 use std::error::Error;
+
 use cursive::Cursive;
 use cursive::views::{Button, Dialog, DummyView, EditView,
-                     LinearLayout, SelectView, Menubar,
-                     ViewRef, TextView};
+                     LinearLayout, SelectView, TextView};
 use cursive::event::Key;
 use cursive::traits::*;
+
 use dirs::data_dir;
 
 use R01_AVALANCHE::{AppData, Habit, Record, Date, Time};
@@ -27,7 +28,7 @@ fn main() {
             habits: Vec::new(),
         }
     };
-    
+
     let mut siv = cursive::default();
 
     siv.menubar()
@@ -39,7 +40,7 @@ fn main() {
         .add_delimiter()
         .add_leaf("Quit", Cursive::quit);
     siv.set_autohide_menu(false);
-    
+
     let habit_select = SelectView::<String>::new()
         .on_submit(draw_records_page)
         .with_name("habit_select")
@@ -96,7 +97,7 @@ fn add_habit(s: &mut Cursive) {
         s.call_on_name("habit_select", |view: &mut SelectView<String>| {
             view.add_item_str(name)
         });
-        
+
         match s.user_data::<AppData>() {
             Some(data) => data.habits.push(Habit {
                 name: String::from(name),
@@ -104,7 +105,7 @@ fn add_habit(s: &mut Cursive) {
             }),
             None => panic!(),
         }
-        
+
         s.pop_layer();
     }
 
@@ -135,7 +136,7 @@ fn delete_habit(s: &mut Cursive) {
             },
             None => panic!(),
         }
-        
+
         s.pop_layer();
     }
 
@@ -154,7 +155,7 @@ fn delete_habit(s: &mut Cursive) {
                                        }))
             ).title(format!("Delete {}?", habit_name)));
         },
-    }                                  
+    }
 }
 
 fn draw_records_page(s: &mut Cursive, name: &str) {
@@ -162,13 +163,13 @@ fn draw_records_page(s: &mut Cursive, name: &str) {
         .with_name("record_select")
         .scrollable()
         .full_screen();
-    
+
     s.add_layer(Dialog::around(record_select)
                 .title("Record view"));
 
     let data = s.user_data::<AppData>().unwrap();
     let habit = data.find_habit_by_name(name).unwrap().clone();
-    
+
     for record in &habit.records {
         s.call_on_name("record_select", |view: &mut SelectView<String>| {
             view.add_item_str(record_item_builder(record));
@@ -188,19 +189,31 @@ fn record_item_builder(record: &Record) -> String {
 
 fn date_from_strings(year_string: String, month_string: String,
                      day_string: String) -> Result<Date, Box<dyn Error>> {
-    Ok(Date {
+    let date = Date {
         year: year_string.parse()?,
         month: month_string.parse()?,
         day: day_string.parse()?
-    })     
+    };
+
+    if date.is_valid() {
+        return Ok(date);
+    } else {
+        return Err("Invalid date".into());
+    }
 }
 
 fn time_from_strings(hours_string: String, minutes_string: String)
                      -> Result<Time, Box<dyn Error>> {
-    Ok(Time {
+    let time = Time {
         hours: hours_string.parse()?,
         minutes: minutes_string.parse()?,
-    })
+    };
+
+    if time.is_valid() {
+        return Ok(time);
+    } else {
+        return Err("Invalid time".into());
+    }
 }
 
 fn add_record(s: &mut Cursive) {
@@ -209,15 +222,12 @@ fn add_record(s: &mut Cursive) {
             view.add_item_str(record_item_builder(&record));
         });
 
-        let mut habit_select = s.find_name::<SelectView<String>>("habit_select").unwrap();
+        let habit_select = s.find_name::<SelectView<String>>("habit_select").unwrap();
         let habit_id = habit_select.selected_id().unwrap();
         let data = s.user_data::<AppData>().unwrap();
         data.habits[habit_id].records.push(record);
-        
+
         s.pop_layer();
-    }
-    fn parsing_error(s: &mut Cursive) {
-        s.add_layer(Dialog::info("Failed to parse date"));
     }
 
     s.add_layer(Dialog::around(LinearLayout::vertical()
@@ -264,7 +274,7 @@ fn add_record(s: &mut Cursive) {
                                       .with_name("note")))
                 .title("New record")
                 .button("Ok", |s| {
-                    
+
                     let date_year =
                         s.call_on_name("date_year", |view: &mut EditView| {
                             view.get_content().to_string()
@@ -277,7 +287,7 @@ fn add_record(s: &mut Cursive) {
                         s.call_on_name("date_day", |view: &mut EditView| {
                             view.get_content().to_string()
                         }).unwrap();
-                    
+
                     match date_from_strings(date_year, date_month, date_day) {
                         Err(_) => {
                             s.add_layer(Dialog::info("Failed to parse date"));
@@ -333,14 +343,14 @@ fn add_record(s: &mut Cursive) {
                                                                |view: &mut EditView| {
                                                                    view.get_content().to_string()
                                                                }).unwrap();
-                                            
+
                                             let record = Record {
                                                 note: note,
                                                 date: date,
                                                 start_time: start_time,
                                                 end_time: end_time,
                                             };
-                                            
+
                                             ok(s, record);
                                         },
                                     }
@@ -356,7 +366,7 @@ fn add_record(s: &mut Cursive) {
 
 fn delete_record(s: &mut Cursive) {
     fn ok (s: &mut Cursive) {
-        let mut habit_select = s.find_name::<SelectView<String>>("habit_select").unwrap();
+        let habit_select = s.find_name::<SelectView<String>>("habit_select").unwrap();
         let habit_id = habit_select.selected_id().unwrap();
         let mut record_select = s.find_name::<SelectView<String>>("record_select").unwrap();
         let selected_id = record_select.selected_id().unwrap();
@@ -367,13 +377,12 @@ fn delete_record(s: &mut Cursive) {
             },
             None => panic!(),
         }
-        
+
         s.pop_layer();
     }
 
-    let mut record_select = s.find_name::<SelectView<String>>("record_select").unwrap();
+    let record_select = s.find_name::<SelectView<String>>("record_select").unwrap();
     let selected_id = record_select.selected_id();
-    let data = s.user_data::<AppData>().unwrap();
     match selected_id {
         None => s.add_layer(Dialog::info("Nothing selected")),
         Some(_) => {
@@ -384,7 +393,7 @@ fn delete_record(s: &mut Cursive) {
                         })
                         .title("Delete record?"));
         },
-    }                                  
+    }
 }
 
 
