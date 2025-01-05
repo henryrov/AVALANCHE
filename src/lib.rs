@@ -7,11 +7,11 @@ use serde::{Deserialize, Serialize};
 
 // Note: Derivations of PartialEq and Debug used in tests
 
-#[derive(PartialEq, Debug, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
 pub struct Date {
-    year: u16,
-    month: u8,
-    day: u8,
+    pub year: u16,
+    pub month: u8,
+    pub day: u8,
 }
 
 impl Date {
@@ -41,10 +41,10 @@ impl Date {
     }
 }
 
-#[derive(PartialEq, Debug, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
 pub struct Time {
-    hours: u16,
-    minutes: u16,
+    pub hours: u16,
+    pub minutes: u16,
 }
 
 impl Time {
@@ -73,15 +73,15 @@ impl Time {
     }
 }
 
-#[derive(PartialEq, Debug, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
 pub struct Record {
-    note: String,
-    date: Date,
-    start_time: Time,
-    end_time: Time,
+    pub note: String,
+    pub date: Date,
+    pub start_time: Time,
+    pub end_time: Time,
 }
     
-#[derive(PartialEq, Debug, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
 pub struct Habit {
     pub name: String,
     pub records: Vec<Record>,
