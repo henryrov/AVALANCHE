@@ -160,6 +160,7 @@ fn delete_habit(s: &mut Cursive) {
 
 fn draw_records_page(s: &mut Cursive, name: &str) {
     let record_select = SelectView::<String>::new()
+        .on_submit(show_record_info)
         .with_name("record_select")
         .scrollable()
         .full_screen();
@@ -177,6 +178,10 @@ fn draw_records_page(s: &mut Cursive, name: &str) {
     }
 
     draw_records_menubar(s);
+}
+
+fn show_record_info(s: &mut Cursive, info: &str) {
+    s.add_layer(Dialog::info(info));
 }
 
 fn record_item_builder(record: &Record) -> String {
