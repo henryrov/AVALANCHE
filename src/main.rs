@@ -158,6 +158,20 @@ fn delete_habit(s: &mut Cursive) {
     }
 }
 
+fn write_habit_stats(s: &mut Cursive, habit: &Habit) {
+    s.call_on_name("stats_dialog", |view: &mut Dialog| {
+        let stats = habit.get_stats();
+        view.set_content(TextView::new(
+            format!("Most recent streak: {} days \
+                     | Total time spent: {} hours and {} minutes",
+                    stats.streak_length, stats.total_time.hours,
+                    stats.total_time.minutes)
+        ))
+    });
+}
+
+    
+
 fn draw_records_page(s: &mut Cursive, name: &str) {
     let record_select = SelectView::<String>::new()
         .on_submit(show_record_info)
@@ -165,11 +179,17 @@ fn draw_records_page(s: &mut Cursive, name: &str) {
         .scrollable()
         .full_screen();
 
-    s.add_layer(Dialog::around(record_select)
-                .title("Record view"));
+    let stats_dialog = Dialog::new().with_name("stats_dialog");
 
     let data = s.user_data::<AppData>().unwrap();
     let habit = data.find_habit_by_name(name).unwrap().clone();
+
+    s.add_layer(Dialog::around(LinearLayout::vertical()
+                               .child(stats_dialog)
+                               .child(record_select))
+                .title("Record view"));
+
+    write_habit_stats(s, &habit);
 
     for record in &habit.records {
         s.call_on_name("record_select", |view: &mut SelectView<String>| {
@@ -214,7 +234,7 @@ fn time_from_strings(hours_string: String, minutes_string: String)
         minutes: minutes_string.parse()?,
     };
 
-    if time.is_valid() {
+    if time.is_valid_time_of_day() {
         return Ok(time);
     } else {
         return Err("Invalid time".into());
@@ -231,8 +251,10 @@ fn add_record(s: &mut Cursive) {
         let habit_id = habit_select.selected_id().unwrap();
         let data = s.user_data::<AppData>().unwrap();
         data.habits[habit_id].records.push(record);
-
+        let habit = data.habits[habit_id].clone();
+        
         s.pop_layer();
+        write_habit_stats(s, &habit);
     }
 
     s.add_layer(Dialog::around(LinearLayout::vertical()
@@ -376,13 +398,10 @@ fn delete_record(s: &mut Cursive) {
         let mut record_select = s.find_name::<SelectView<String>>("record_select").unwrap();
         let selected_id = record_select.selected_id().unwrap();
         record_select.remove_item(selected_id);
-        match s.user_data::<AppData>() {
-            Some(data) => {
-                data.habits[habit_id].records.remove(selected_id);
-            },
-            None => panic!(),
-        }
-
+        let data =  s.user_data::<AppData>().unwrap();
+        data.habits[habit_id].records.remove(selected_id);
+        let habit = data.habits[habit_id].clone();
+        write_habit_stats(s, &habit);
         s.pop_layer();
     }
 

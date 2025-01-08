@@ -46,24 +46,94 @@ fn date_is_valid_test() {
 }
 
 #[test]
+fn is_after_test() {
+    let date1 = Date {
+        year: 1987,
+        month: 6,
+        day: 29,
+    };
+    let date2 = Date {
+        year: 1987,
+        month: 6,
+        day: 30,
+    };
+    let date3 = Date {
+        year: 1987,
+        month: 7,
+        day: 1,
+    };
+    let date4 = Date {
+        year: 1999,
+        month: 12,
+        day: 31,
+    };
+    let date5 = Date {
+        year: 2000,
+        month: 1,
+        day: 1,
+    };
+
+    assert!(date2.is_after(&date1));
+    assert!(date3.is_after(&date2));
+    assert!(date5.is_after(&date4));
+    assert!(date4.is_after(&date3));
+    assert!(!date1.is_after(&date3));
+}
+
+#[test]
+fn is_day_after_test() {
+    let date1 = Date {
+        year: 1987,
+        month: 6,
+        day: 29,
+    };
+    let date2 = Date {
+        year: 1987,
+        month: 6,
+        day: 30,
+    };
+    let date3 = Date {
+        year: 1987,
+        month: 7,
+        day: 1,
+    };
+    let date4 = Date {
+        year: 1999,
+        month: 12,
+        day: 31,
+    };
+    let date5 = Date {
+        year: 2000,
+        month: 1,
+        day: 1,
+    };
+
+    assert!(date2.is_day_after(&date1));
+    assert!(date3.is_day_after(&date2));
+    assert!(date5.is_day_after(&date4));
+    assert!(!date4.is_day_after(&date3));
+    assert!(!date1.is_day_after(&date3));
+}
+
+#[test]
 fn time_is_valid_test() {
     let time1 = Time {
         hours: 0,
         minutes: 20,
     }; // Valid
-    assert!(time1.is_valid());
+    assert!(time1.is_valid_time_of_day());
 
     let time2 = Time {
         hours: 25,
         minutes: 20,
     }; // Not valid
-    assert!(!time2.is_valid());
+    assert!(!time2.is_valid_time_of_day());
 
     let time3 = Time {
         hours: 1,
         minutes: 60,
     }; // Not valid
-    assert!(!time3.is_valid());
+    assert!(!time3.is_valid_time_of_day());
 }
 
 #[test]
@@ -88,6 +158,24 @@ fn time_difference_test() {
                    minutes: 50,
                });
     Time::difference(&time1, &time3).unwrap(); // Panics (time3 before time1)
+}
+
+#[test]
+fn time_add_test() {
+   let time1 = Time {
+        hours: 1,
+        minutes: 20,
+    };
+    let time2 = Time {
+        hours: 5,
+        minutes: 10,
+    };
+
+    assert_eq!(time1 + time2,
+               Time {
+                   hours: 6,
+                   minutes: 30,
+               });
 }
 
 #[test]

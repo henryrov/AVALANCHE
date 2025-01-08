@@ -3,6 +3,7 @@
 use std::error::Error;
 use std::fs;
 use std::io::Write;
+use std::ops::{Add, AddAssign};
 use serde::{Deserialize, Serialize};
 
 // Note: Derivations of PartialEq and Debug used in tests
@@ -15,11 +16,11 @@ pub struct Date {
 }
 
 impl Date {
-    pub fn is_valid(&self) -> bool {
-        let month_length = match self.month {
+    fn month_length(month: u8, year: u16) -> u8 {
+        match month {
             1 => 31,
-            2 if self.year % 4 == 0 => 29,
-            2 if self.year % 4 != 0 => 28,
+            2 if year % 4 == 0 => 29,
+            2 if year % 4 != 0 => 28,
             3 => 31,
             4 => 30,
             5 => 31,
@@ -31,14 +32,46 @@ impl Date {
             11 => 30,
             12 => 31,
             _ => 0, // Not a real month
-        };
-
-        if self.day <= month_length && self.day != 0 {
+        }
+    }
+        
+    pub fn is_valid(&self) -> bool {
+        if self.day <= Self::month_length(self.month, self.year)
+            && self.day != 0 {
             return true;
         } else {
             return false;
         }
     }
+
+    pub fn is_after(&self, comp: &Date) -> bool {
+        if (self.year == comp.year && self.month == comp.month
+            && self.day > comp.day)
+            || (self.year == comp.year && self.month > comp.month)
+            || (self.year > comp.year) {
+                return true;
+            }
+        false
+    }
+
+    pub fn is_day_after(&self, comp: &Date) -> bool {
+        if self.day == comp.day + 1 && self.month == comp.month
+            && self.year == comp.year {
+                return true;
+            }
+        else if comp.day == Self::month_length(comp.month, comp.year)
+            && self.month == (comp.month + 1) 
+            && self.day == 1
+            && self.year == comp.year {
+                return true;
+            }
+        else if comp.day == 31 && comp.month == 12
+            && self.day == 1 && self.month == 1
+            && self.year == comp.year + 1 {
+                return true;
+            }
+        false
+    }        
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
@@ -64,12 +97,30 @@ impl Time {
         })
     }
 
-    pub fn is_valid(&self) -> bool {
+    pub fn is_valid_time_of_day(&self) -> bool {
         if self.hours < 24 && self.minutes < 60 {
             return true;
         } else {
             return false;
         }
+    }
+}
+
+impl Add for Time {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            hours: self.hours + other.hours
+                + (self.minutes + other.minutes) / 60,
+            minutes: (self.minutes + other.minutes) % 60
+        }
+    }
+}
+
+impl AddAssign for Time {
+    fn add_assign(&mut self, other: Self) {
+        *self = self.clone() + other;
     }
 }
 
@@ -80,11 +131,78 @@ pub struct Record {
     pub start_time: Time,
     pub end_time: Time,
 }
-    
+
+impl Record {
+    pub fn length(&self) -> Result<Time, Box<dyn Error>> {
+        Time::difference(&self.start_time, &self.end_time)
+    }
+}
+
+pub struct HabitStats {
+    pub streak_length: u16,
+    pub total_time: Time,
+}
+
 #[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
 pub struct Habit {
     pub name: String,
     pub records: Vec<Record>,
+}
+
+impl Habit {    
+    pub fn get_stats(&self) -> HabitStats {
+        let mut total_time = Time {
+            hours: 0,
+            minutes: 0,
+        };
+        
+        // Find most recent date with a record
+
+        if self.records.is_empty() {
+            return HabitStats {
+                streak_length: 0,
+                total_time: total_time,
+            };
+        }
+
+        // Start by assuming the most recent date is the latest record
+        // The case of an empty vector was already handled above
+        
+        let mut most_recent_date = self.records.last().unwrap().date.clone();
+
+        /* This loop will be used to find the most recent event and the
+         * total time.
+         */
+        
+        for record in &self.records {
+            total_time += record.length().unwrap();
+            if !most_recent_date.is_after(&record.date) {
+                most_recent_date = record.date.clone();
+            }
+        }
+
+        // Now check for the streak
+
+        let mut comp_date = most_recent_date;
+        let mut streak_len: u16 = 0;
+        let mut day_before_found = true;
+        while day_before_found {
+            streak_len += 1;
+            for record in &self.records {
+                if comp_date.is_day_after(&record.date) {
+                    day_before_found = true;
+                    comp_date = record.date.clone();
+                    break;
+                }
+                day_before_found = false;
+            }
+        }
+
+        HabitStats {
+            streak_length: streak_len,
+            total_time: total_time,
+        }
+    }
 }
 
 #[derive(PartialEq, Debug, Deserialize, Serialize)]
