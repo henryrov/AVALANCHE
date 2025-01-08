@@ -1,10 +1,10 @@
 #![allow(non_snake_case)]
 
+use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fs;
 use std::io::Write;
 use std::ops::{Add, AddAssign};
-use serde::{Deserialize, Serialize};
 
 // Note: Derivations of PartialEq and Debug used in tests
 
@@ -34,10 +34,9 @@ impl Date {
             _ => 0, // Not a real month
         }
     }
-        
+
     pub fn is_valid(&self) -> bool {
-        if self.day <= Self::month_length(self.month, self.year)
-            && self.day != 0 {
+        if self.day <= Self::month_length(self.month, self.year) && self.day != 0 {
             return true;
         } else {
             return false;
@@ -45,33 +44,34 @@ impl Date {
     }
 
     pub fn is_after(&self, comp: &Date) -> bool {
-        if (self.year == comp.year && self.month == comp.month
-            && self.day > comp.day)
+        if (self.year == comp.year && self.month == comp.month && self.day > comp.day)
             || (self.year == comp.year && self.month > comp.month)
-            || (self.year > comp.year) {
-                return true;
-            }
+            || (self.year > comp.year)
+        {
+            return true;
+        }
         false
     }
 
     pub fn is_day_after(&self, comp: &Date) -> bool {
-        if self.day == comp.day + 1 && self.month == comp.month
-            && self.year == comp.year {
-                return true;
-            }
-        else if comp.day == Self::month_length(comp.month, comp.year)
-            && self.month == (comp.month + 1) 
+        if self.day == comp.day + 1 && self.month == comp.month && self.year == comp.year {
+            return true;
+        } else if comp.day == Self::month_length(comp.month, comp.year)
+            && self.month == (comp.month + 1)
             && self.day == 1
-            && self.year == comp.year {
-                return true;
-            }
-        else if comp.day == 31 && comp.month == 12
-            && self.day == 1 && self.month == 1
-            && self.year == comp.year + 1 {
-                return true;
-            }
+            && self.year == comp.year
+        {
+            return true;
+        } else if comp.day == 31
+            && comp.month == 12
+            && self.day == 1
+            && self.month == 1
+            && self.year == comp.year + 1
+        {
+            return true;
+        }
         false
-    }        
+    }
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
@@ -81,8 +81,7 @@ pub struct Time {
 }
 
 impl Time {
-    pub fn difference(start: &Time, end: &Time)
-                      -> Result<Time, Box<dyn Error>> {
+    pub fn difference(start: &Time, end: &Time) -> Result<Time, Box<dyn Error>> {
         let start_minutes: u16 = start.hours * 60 + start.minutes;
         let end_minutes: u16 = end.hours * 60 + end.minutes;
         if end_minutes < start_minutes {
@@ -111,9 +110,8 @@ impl Add for Time {
 
     fn add(self, other: Self) -> Self {
         Self {
-            hours: self.hours + other.hours
-                + (self.minutes + other.minutes) / 60,
-            minutes: (self.minutes + other.minutes) % 60
+            hours: self.hours + other.hours + (self.minutes + other.minutes) / 60,
+            minutes: (self.minutes + other.minutes) % 60,
         }
     }
 }
@@ -149,13 +147,13 @@ pub struct Habit {
     pub records: Vec<Record>,
 }
 
-impl Habit {    
+impl Habit {
     pub fn get_stats(&self) -> HabitStats {
         let mut total_time = Time {
             hours: 0,
             minutes: 0,
         };
-        
+
         // Find most recent date with a record
 
         if self.records.is_empty() {
@@ -167,13 +165,13 @@ impl Habit {
 
         // Start by assuming the most recent date is the latest record
         // The case of an empty vector was already handled above
-        
+
         let mut most_recent_date = self.records.last().unwrap().date.clone();
 
         /* This loop will be used to find the most recent event and the
          * total time.
          */
-        
+
         for record in &self.records {
             total_time += record.length().unwrap();
             if !most_recent_date.is_after(&record.date) {
@@ -220,17 +218,15 @@ impl AppData {
         }
         None
     }
-    
-    pub fn write_to_file(&self, filename: &str)
-                         -> Result<(), Box<dyn Error>> {
+
+    pub fn write_to_file(&self, filename: &str) -> Result<(), Box<dyn Error>> {
         let mut file = fs::File::create(filename)?;
         let file_contents = ron::to_string(&self)?;
         file.write(file_contents.as_bytes())?;
         Ok(())
     }
 
-    pub fn read_from_file(filename: &str)
-                          -> Result<AppData, Box<dyn Error>> {
+    pub fn read_from_file(filename: &str) -> Result<AppData, Box<dyn Error>> {
         let file = fs::File::open(filename)?;
         let data: AppData = ron::de::from_reader(file)?;
         return Ok(data);

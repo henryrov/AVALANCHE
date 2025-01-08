@@ -152,17 +152,19 @@ fn time_difference_test() {
         minutes: 15,
     };
 
-    assert_eq!(Time::difference(&time1, &time2).unwrap(),
-               Time {
-                   hours: 3,
-                   minutes: 50,
-               });
+    assert_eq!(
+        Time::difference(&time1, &time2).unwrap(),
+        Time {
+            hours: 3,
+            minutes: 50,
+        }
+    );
     Time::difference(&time1, &time3).unwrap(); // Panics (time3 before time1)
 }
 
 #[test]
 fn time_add_test() {
-   let time1 = Time {
+    let time1 = Time {
         hours: 1,
         minutes: 20,
     };
@@ -171,11 +173,13 @@ fn time_add_test() {
         minutes: 10,
     };
 
-    assert_eq!(time1 + time2,
-               Time {
-                   hours: 6,
-                   minutes: 30,
-               });
+    assert_eq!(
+        time1 + time2,
+        Time {
+            hours: 6,
+            minutes: 30,
+        }
+    );
 }
 
 #[test]
@@ -184,7 +188,6 @@ fn write_to_file_test() -> Result<(), Box<dyn Error>> {
         /* This test passes if the write is successful. It doesn't check what
          * is written. The output in test.ron should be checked manually.
          */
-        
         note: String::from("Writing test functions"),
         date: Date {
             year: 2025,
@@ -200,13 +203,13 @@ fn write_to_file_test() -> Result<(), Box<dyn Error>> {
             minutes: 20,
         },
     };
-    let records = vec!(record);
-    
+    let records = vec![record];
+
     let habit = Habit {
         name: String::from("Testing"),
         records: records,
     };
-    let habits = vec!(habit);
+    let habits = vec![habit];
 
     let app_data = AppData {
         version: AppData::CURRENT_VERSION,
@@ -221,7 +224,7 @@ fn read_from_file_test() {
     /* This test can fail if run concurrently with write_from_file_test.
      * If it fails, try running with --test-threads 1.
      */
-    
+
     let record = Record {
         note: String::from("Writing test functions"),
         date: Date {
@@ -238,21 +241,20 @@ fn read_from_file_test() {
             minutes: 20,
         },
     };
-    let records = vec!(record);
-    
+    let records = vec![record];
+
     let habit = Habit {
         name: String::from("Testing"),
         records: records,
     };
-    let habits = vec!(habit);
+    let habits = vec![habit];
 
     let reference_app_data = AppData {
         version: AppData::CURRENT_VERSION,
         habits: habits,
     };
 
-    let file_app_data = AppData::read_from_file("test.ron").expect(
-        "Failed to read data file. Make sure to run tests with 1 thread.\n"
-    );
+    let file_app_data = AppData::read_from_file("test.ron")
+        .expect("Failed to read data file. Make sure to run tests with 1 thread.\n");
     assert_eq!(reference_app_data, file_app_data);
 }
