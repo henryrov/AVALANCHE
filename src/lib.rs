@@ -204,12 +204,12 @@ impl Habit {
 }
 
 #[derive(PartialEq, Debug, Deserialize, Serialize)]
-pub struct AppData {
+pub struct UserData {
     pub version: u16,
     pub habits: Vec<Habit>,
 }
 
-impl AppData {
+impl UserData {
     pub fn find_habit_by_name(&self, name: &str) -> Option<&Habit> {
         for habit in &self.habits {
             if habit.name == name {
@@ -226,9 +226,9 @@ impl AppData {
         Ok(())
     }
 
-    pub fn read_from_file(filename: &str) -> Result<AppData, Box<dyn Error>> {
+    pub fn read_from_file(filename: &str) -> Result<UserData, Box<dyn Error>> {
         let file = fs::File::open(filename)?;
-        let data: AppData = ron::de::from_reader(file)?;
+        let data: UserData = ron::de::from_reader(file)?;
         return Ok(data);
     }
 

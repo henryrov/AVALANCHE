@@ -7,7 +7,7 @@ use cursive::Cursive;
 
 use dirs::data_dir;
 
-use R01_AVALANCHE::{AppData, Date, Habit, Record, Time};
+use R01_AVALANCHE::{UserData, Date, Habit, Record, Time};
 
 fn main() {
     let app_data = match std::fs::exists(format!(
@@ -17,12 +17,12 @@ fn main() {
     ))
     .unwrap()
     {
-        true => AppData::read_from_file(
+        true => UserData::read_from_file(
             format!("{}/{}", data_dir().unwrap().to_str().unwrap(), ".avalanche").as_str(),
         )
         .expect("Failed to open data file"),
-        false => AppData {
-            version: AppData::CURRENT_VERSION,
+        false => UserData {
+            version: UserData::CURRENT_VERSION,
             habits: Vec::new(),
         },
     };
@@ -98,7 +98,7 @@ fn add_habit(s: &mut Cursive) {
             view.add_item_str(name)
         });
 
-        match s.user_data::<AppData>() {
+        match s.user_data::<UserData>() {
             Some(data) => data.habits.push(Habit {
                 name: String::from(name),
                 records: Vec::new(),
@@ -129,7 +129,7 @@ fn delete_habit(s: &mut Cursive) {
         let mut select = s.find_name::<SelectView<String>>("habit_select").unwrap();
         let selected_id = select.selected_id().unwrap();
         select.remove_item(selected_id);
-        match s.user_data::<AppData>() {
+        match s.user_data::<UserData>() {
             Some(data) => {
                 data.habits.remove(selected_id);
             }
@@ -141,7 +141,7 @@ fn delete_habit(s: &mut Cursive) {
 
     let select = s.find_name::<SelectView<String>>("habit_select").unwrap();
     let selected_id = select.selected_id();
-    let data = s.user_data::<AppData>().unwrap();
+    let data = s.user_data::<UserData>().unwrap();
     match selected_id {
         None => s.add_layer(Dialog::info("Nothing selected")),
         Some(focus) => {
@@ -181,7 +181,7 @@ fn draw_records_page(s: &mut Cursive, name: &str) {
 
     let stats_dialog = Dialog::new().with_name("stats_dialog");
 
-    let data = s.user_data::<AppData>().unwrap();
+    let data = s.user_data::<UserData>().unwrap();
     let habit = data.find_habit_by_name(name).unwrap().clone();
 
     s.add_layer(
@@ -261,7 +261,7 @@ fn add_record(s: &mut Cursive) {
 
         let habit_select = s.find_name::<SelectView<String>>("habit_select").unwrap();
         let habit_id = habit_select.selected_id().unwrap();
-        let data = s.user_data::<AppData>().unwrap();
+        let data = s.user_data::<UserData>().unwrap();
         data.habits[habit_id].records.push(record);
         let habit = data.habits[habit_id].clone();
 
@@ -431,7 +431,7 @@ fn delete_record(s: &mut Cursive) {
         let mut record_select = s.find_name::<SelectView<String>>("record_select").unwrap();
         let selected_id = record_select.selected_id().unwrap();
         record_select.remove_item(selected_id);
-        let data = s.user_data::<AppData>().unwrap();
+        let data = s.user_data::<UserData>().unwrap();
         data.habits[habit_id].records.remove(selected_id);
         let habit = data.habits[habit_id].clone();
         write_habit_stats(s, &habit);
@@ -461,7 +461,7 @@ fn back(s: &mut Cursive) {
 }
 
 fn save_data(s: &mut Cursive) {
-    let data = s.user_data::<AppData>().unwrap();
+    let data = s.user_data::<UserData>().unwrap();
     data.write_to_file(
         format!("{}/{}", data_dir().unwrap().to_str().unwrap(), ".avalanche").as_str(),
     )

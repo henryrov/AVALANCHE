@@ -211,8 +211,8 @@ fn write_to_file_test() -> Result<(), Box<dyn Error>> {
     };
     let habits = vec![habit];
 
-    let app_data = AppData {
-        version: AppData::CURRENT_VERSION,
+    let app_data = UserData {
+        version: UserData::CURRENT_VERSION,
         habits: habits,
     };
 
@@ -249,12 +249,12 @@ fn read_from_file_test() {
     };
     let habits = vec![habit];
 
-    let reference_app_data = AppData {
-        version: AppData::CURRENT_VERSION,
+    let reference_app_data = UserData {
+        version: UserData::CURRENT_VERSION,
         habits: habits,
     };
 
-    let file_app_data = AppData::read_from_file("test.ron")
+    let file_app_data = UserData::read_from_file("test.ron")
         .expect("Failed to read data file. Make sure to run tests with 1 thread.\n");
     assert_eq!(reference_app_data, file_app_data);
 }
