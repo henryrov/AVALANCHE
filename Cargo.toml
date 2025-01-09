@@ -2,6 +2,11 @@
 name = "R01_AVALANCHE"
 version = "0.1.0"
 edition = "2021"
+license = "GPLv3"
+
+[[bin]]
+name = "avalanche"
+path = "src/main.rs"
 
 [dependencies]
 cursive = "0.21.1"
