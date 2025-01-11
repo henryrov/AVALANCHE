@@ -203,7 +203,7 @@ impl Habit {
     }
 }
 
-#[derive(PartialEq, Debug, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
 pub struct UserData {
     pub version: u16,
     pub habits: Vec<Habit>,
