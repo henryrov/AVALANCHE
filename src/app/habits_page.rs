@@ -3,8 +3,8 @@ use cursive::traits::*;
 use cursive::views::{Button, Dialog, DummyView, EditView, LinearLayout, SelectView};
 use cursive::{Cursive, CursiveRunnable};
 
-use crate::{UserData, Habit};
 use crate::app;
+use crate::{Habit, UserData};
 
 pub fn draw(mut s: CursiveRunnable) {
     draw_menubar(&mut s);

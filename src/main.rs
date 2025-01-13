@@ -1,5 +1,5 @@
 use dirs::data_dir;
-use R01_AVALANCHE::{UserData, Habit, Record, Date, Time};
+use R01_AVALANCHE::{Date, Habit, Record, Time, UserData};
 
 mod app;
 
