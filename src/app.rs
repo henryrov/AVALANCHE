@@ -15,11 +15,13 @@ pub struct AppData {
 }
 
 fn save_data(s: &mut Cursive) {
-    let data = s.user_data::<UserData>().unwrap();
-    data.write_to_file(format!(
-        "{}/{}",
-        data_dir().unwrap().to_str().unwrap(),
-        ".avalanche"
-    ))
-    .expect("Failed to write data")
+    let app_data = s.user_data::<AppData>().unwrap();
+    let user_data = &mut app_data.user_data;
+    user_data
+        .write_to_file(format!(
+            "{}/{}",
+            data_dir().unwrap().to_str().unwrap(),
+            ".avalanche"
+        ))
+        .expect("Failed to write data")
 }

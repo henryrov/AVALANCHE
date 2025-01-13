@@ -4,13 +4,15 @@ use cursive::views::{Button, Dialog, DummyView, EditView, LinearLayout, SelectVi
 use cursive::{Cursive, CursiveRunnable};
 
 use crate::app;
+use crate::app::AppData;
 use crate::{Habit, UserData};
 
 pub fn draw(mut s: CursiveRunnable) {
     draw_menubar(&mut s);
     s.set_autohide_menu(false);
 
-    let data = s.user_data::<UserData>().unwrap().clone();
+    let app_data = s.user_data::<AppData>().unwrap();
+    let user_data = app_data.user_data.clone();
 
     let habit_select = SelectView::<String>::new()
         .on_submit(app::records_page::draw)
@@ -27,7 +29,7 @@ pub fn draw(mut s: CursiveRunnable) {
         .title("R01_AVALANCHE"),
     );
 
-    for habit in &data.habits {
+    for habit in &user_data.habits {
         s.call_on_name("habit_select", |view: &mut SelectView<String>| {
             view.add_item_str(habit.name.as_str());
         });
@@ -56,13 +58,12 @@ fn add_habit(s: &mut Cursive) {
             view.add_item_str(name)
         });
 
-        match s.user_data::<UserData>() {
-            Some(data) => data.habits.push(Habit {
-                name: String::from(name),
-                records: Vec::new(),
-            }),
-            None => panic!(),
-        }
+        let app_data = s.user_data::<AppData>().unwrap();
+        let user_data = &mut app_data.user_data;
+        user_data.habits.push(Habit {
+            name: String::from(name),
+            records: Vec::new(),
+        });
 
         s.pop_layer();
     }
@@ -87,23 +88,22 @@ fn delete_habit(s: &mut Cursive) {
         let mut select = s.find_name::<SelectView<String>>("habit_select").unwrap();
         let selected_id = select.selected_id().unwrap();
         select.remove_item(selected_id);
-        match s.user_data::<UserData>() {
-            Some(data) => {
-                data.habits.remove(selected_id);
-            }
-            None => panic!(),
-        }
+
+        let app_data = s.user_data::<AppData>().unwrap();
+        let user_data = &mut app_data.user_data;
+        user_data.habits.remove(selected_id);
 
         s.pop_layer();
     }
 
     let select = s.find_name::<SelectView<String>>("habit_select").unwrap();
     let selected_id = select.selected_id();
-    let data = s.user_data::<UserData>().unwrap();
+    let app_data = s.user_data::<AppData>().unwrap();
+    let user_data = &mut app_data.user_data;
     match selected_id {
         None => s.add_layer(Dialog::info("Nothing selected")),
         Some(focus) => {
-            let habit_name = data.habits[focus].name.clone();
+            let habit_name = user_data.habits[focus].name.clone();
             s.add_layer(
                 Dialog::around(
                     LinearLayout::horizontal()

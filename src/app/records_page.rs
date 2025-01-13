@@ -5,6 +5,7 @@ use cursive::views::{Dialog, EditView, LinearLayout, SelectView, TextView};
 use cursive::Cursive;
 
 use crate::app;
+use crate::app::AppData;
 use crate::{Date, Habit, Record, Time, UserData};
 
 pub fn draw(s: &mut Cursive, name: &str) {
@@ -16,8 +17,9 @@ pub fn draw(s: &mut Cursive, name: &str) {
 
     let stats_dialog = Dialog::new().with_name("stats_dialog");
 
-    let data = s.user_data::<UserData>().unwrap();
-    let habit = data.find_habit_by_name(name).unwrap().clone();
+    let app_data = s.user_data::<AppData>().unwrap();
+    let user_data = &app_data.user_data;
+    let habit = user_data.find_habit_by_name(name).unwrap().clone();
 
     s.add_layer(
         Dialog::around(
@@ -90,9 +92,11 @@ fn add_record(s: &mut Cursive) {
 
         let habit_select = s.find_name::<SelectView<String>>("habit_select").unwrap();
         let habit_id = habit_select.selected_id().unwrap();
-        let data = s.user_data::<UserData>().unwrap();
-        data.habits[habit_id].records.push(record);
-        let habit = data.habits[habit_id].clone();
+        let app_data = s.user_data::<AppData>().unwrap();
+        let user_data = &mut app_data.user_data;
+
+        user_data.habits[habit_id].records.push(record);
+        let habit = user_data.habits[habit_id].clone();
 
         s.pop_layer();
         write_habit_stats(s, &habit);
@@ -322,9 +326,10 @@ fn delete_record(s: &mut Cursive) {
         let mut record_select = s.find_name::<SelectView<String>>("record_select").unwrap();
         let selected_id = record_select.selected_id().unwrap();
         record_select.remove_item(selected_id);
-        let data = s.user_data::<UserData>().unwrap();
-        data.habits[habit_id].records.remove(selected_id);
-        let habit = data.habits[habit_id].clone();
+        let app_data = s.user_data::<AppData>().unwrap();
+        let user_data = &mut app_data.user_data;
+        user_data.habits[habit_id].records.remove(selected_id);
+        let habit = user_data.habits[habit_id].clone();
         write_habit_stats(s, &habit);
         s.pop_layer();
     }
