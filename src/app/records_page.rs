@@ -124,7 +124,7 @@ fn add_record(s: &mut Cursive) {
             month: month_string.parse()?,
             day: day_string.parse()?,
         };
-        
+
         if date.is_valid() {
             return Ok(date);
         } else {
