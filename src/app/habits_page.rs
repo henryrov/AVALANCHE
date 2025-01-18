@@ -54,17 +54,25 @@ pub fn draw_menubar(s: &mut Cursive) {
 
 fn add_habit(s: &mut Cursive) {
     fn ok(s: &mut Cursive, name: &str) {
-        s.call_on_name("habit_select", |view: &mut SelectView<String>| {
-            view.add_item_str(name)
-        });
-
         let app_data = s.user_data::<AppData>().unwrap();
         let user_data = &mut app_data.user_data;
+        if user_data.find_habit_by_name(name).is_some() {
+            // Name already in use. For now, habits are uniquely identified
+            // by name, so this won't be allowed.
+
+            s.add_layer(Dialog::info("Name already in use"));
+            return;
+        }
+
         user_data.habits.push(Habit {
             name: String::from(name),
             records: Vec::new(),
         });
         app_data.unsaved_changes = true;
+
+        s.call_on_name("habit_select", |view: &mut SelectView<String>| {
+            view.add_item_str(name)
+        });
 
         s.pop_layer();
     }

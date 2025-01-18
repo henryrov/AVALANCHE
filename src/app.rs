@@ -22,9 +22,7 @@ fn quit(s: &mut Cursive) {
             Dialog::around(
                 LinearLayout::vertical()
                     .child(TextView::new("There are unsaved changes."))
-                    .child(TextView::new(
-                        "Are you sure you want to quit?",
-                    )),
+                    .child(TextView::new("Are you sure you want to quit?")),
             )
             .button("Save and quit", |s| {
                 save_data(s);
