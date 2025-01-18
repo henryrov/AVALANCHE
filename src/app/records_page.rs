@@ -6,7 +6,7 @@ use cursive::Cursive;
 
 use crate::app;
 use crate::app::AppData;
-use crate::{Date, Habit, Record, Time, UserData};
+use crate::{Date, Habit, Record, Time};
 
 pub fn draw(s: &mut Cursive, name: &str) {
     let record_select = SelectView::<String>::new()
@@ -52,7 +52,7 @@ fn draw_records_menubar(s: &mut Cursive) {
         .add_delimiter()
         .add_leaf("Back", back)
         .add_delimiter()
-        .add_leaf("Quit", Cursive::quit);
+        .add_leaf("Quit", app::quit);
 }
 
 fn write_habit_stats(s: &mut Cursive, habit: &Habit) {
@@ -96,6 +96,8 @@ fn add_record(s: &mut Cursive) {
         let user_data = &mut app_data.user_data;
 
         user_data.habits[habit_id].records.push(record);
+        app_data.unsaved_changes = true;
+
         let habit = user_data.habits[habit_id].clone();
 
         s.pop_layer();
@@ -329,6 +331,7 @@ fn delete_record(s: &mut Cursive) {
         let app_data = s.user_data::<AppData>().unwrap();
         let user_data = &mut app_data.user_data;
         user_data.habits[habit_id].records.remove(selected_id);
+        app_data.unsaved_changes = true;
         let habit = user_data.habits[habit_id].clone();
         write_habit_stats(s, &habit);
         s.pop_layer();

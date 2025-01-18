@@ -5,7 +5,7 @@ use cursive::{Cursive, CursiveRunnable};
 
 use crate::app;
 use crate::app::AppData;
-use crate::{Habit, UserData};
+use crate::Habit;
 
 pub fn draw(mut s: CursiveRunnable) {
     draw_menubar(&mut s);
@@ -49,7 +49,7 @@ pub fn draw_menubar(s: &mut Cursive) {
         .add_delimiter()
         .add_leaf("Save", app::save_data)
         .add_delimiter()
-        .add_leaf("Quit", Cursive::quit);
+        .add_leaf("Quit", app::quit);
 }
 
 fn add_habit(s: &mut Cursive) {
@@ -64,6 +64,7 @@ fn add_habit(s: &mut Cursive) {
             name: String::from(name),
             records: Vec::new(),
         });
+        app_data.unsaved_changes = true;
 
         s.pop_layer();
     }
@@ -92,6 +93,7 @@ fn delete_habit(s: &mut Cursive) {
         let app_data = s.user_data::<AppData>().unwrap();
         let user_data = &mut app_data.user_data;
         user_data.habits.remove(selected_id);
+        app_data.unsaved_changes = true;
 
         s.pop_layer();
     }
