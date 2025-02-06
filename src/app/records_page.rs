@@ -262,7 +262,7 @@ fn add_record(s: &mut Cursive) {
                 .child(TextView::new("End Time:"))
                 .child(end_time_row)
                 .child(TextView::new("Note:"))
-                .child(EditView::new().with_name("note")),
+                .child(EditView::new().with_name("note").fixed_width(30)),
         )
         .title("New record")
         .button("Ok", |s| {
