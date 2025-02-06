@@ -48,7 +48,9 @@ fn draw_records_menubar(s: &mut Cursive) {
         .add_delimiter()
         .add_leaf("Delete selection", delete_record)
         .add_delimiter()
-        .add_leaf("Save", app::save_data)
+        .add_leaf("Save", |s| {
+            app::save_data(s).unwrap_or(());
+        })
         .add_delimiter()
         .add_leaf("Back", back)
         .add_delimiter()

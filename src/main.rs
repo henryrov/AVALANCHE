@@ -4,12 +4,11 @@ use R01_AVALANCHE::{Date, Habit, Record, Time, UserData};
 mod app;
 
 fn main() {
+    let filename = format!("{}/{}", data_dir().unwrap().to_str().unwrap(), ".avalanche");
+
     let app_data = app::AppData {
-        user_data: UserData::try_from_file(format!(
-            "{}/{}",
-            data_dir().unwrap().to_str().unwrap(),
-            ".avalanche"
-        )),
+        data_file_name: filename.clone(),
+        user_data: UserData::try_from_file(&filename),
         selected_habit: None,
         selected_record: None,
         unsaved_changes: false,

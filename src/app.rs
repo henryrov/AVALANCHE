@@ -1,14 +1,14 @@
 use cursive::views::{Dialog, LinearLayout, TextView};
 use cursive::Cursive;
+use std::error::Error;
 
 use R01_AVALANCHE::UserData;
-
-use dirs::data_dir;
 
 pub mod habits_page;
 pub mod records_page;
 
 pub struct AppData {
+    pub data_file_name: String,
     pub user_data: UserData,
     pub selected_habit: Option<usize>,
     pub selected_record: Option<usize>,
@@ -25,8 +25,9 @@ fn quit(s: &mut Cursive) {
                     .child(TextView::new("Are you sure you want to quit?")),
             )
             .button("Save and quit", |s| {
-                save_data(s);
-                s.quit();
+                if save_data(s).is_ok() {
+                    s.quit();
+                }
             })
             .button("Quit", Cursive::quit)
             .button("Cancel", |s| {
@@ -38,15 +39,17 @@ fn quit(s: &mut Cursive) {
     }
 }
 
-fn save_data(s: &mut Cursive) {
+fn save_data(s: &mut Cursive) -> Result<(), Box<dyn Error>> {
     let app_data = s.user_data::<AppData>().unwrap();
-    app_data.unsaved_changes = false;
     let user_data = &mut app_data.user_data;
-    user_data
-        .write_to_file(format!(
-            "{}/{}",
-            data_dir().unwrap().to_str().unwrap(),
-            ".avalanche"
-        ))
-        .expect("Failed to write data")
+    match user_data.write_to_file(&app_data.data_file_name) {
+        Ok(_) => {
+            app_data.unsaved_changes = false;
+            return Ok(());
+        }
+        Err(error) => {
+            s.add_layer(Dialog::info("Failed to write to data file."));
+            return Err(error);
+        }
+    }
 }

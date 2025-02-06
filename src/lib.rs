@@ -219,20 +219,20 @@ impl UserData {
         None
     }
 
-    pub fn write_to_file(&self, filename: String) -> Result<(), Box<dyn Error>> {
+    pub fn write_to_file(&self, filename: &String) -> Result<(), Box<dyn Error>> {
         let mut file = fs::File::create(filename)?;
         let file_contents = ron::to_string(&self)?;
         file.write(file_contents.as_bytes())?;
         Ok(())
     }
 
-    pub fn read_from_file(filename: String) -> Result<UserData, Box<dyn Error>> {
+    pub fn read_from_file(filename: &String) -> Result<UserData, Box<dyn Error>> {
         let file = fs::File::open(filename)?;
         let data: UserData = ron::de::from_reader(file)?;
         return Ok(data);
     }
 
-    pub fn try_from_file(filename: String) -> UserData {
+    pub fn try_from_file(filename: &String) -> UserData {
         if fs::exists(&filename).unwrap() {
             return Self::read_from_file(filename).unwrap();
         } else {
