@@ -11,7 +11,6 @@ pub struct AppData {
     pub data_file_name: String,
     pub user_data: UserData,
     pub selected_habit: Option<usize>,
-    pub selected_record: Option<usize>,
     pub unsaved_changes: bool,
 }
 

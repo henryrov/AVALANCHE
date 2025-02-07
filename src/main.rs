@@ -10,7 +10,6 @@ fn main() {
         data_file_name: filename.clone(),
         user_data: UserData::try_from_file(&filename),
         selected_habit: None,
-        selected_record: None,
         unsaved_changes: false,
     };
 

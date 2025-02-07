@@ -19,7 +19,8 @@ pub fn draw(s: &mut Cursive, name: &str) {
 
     let app_data = s.user_data::<AppData>().unwrap();
     let user_data = &app_data.user_data;
-    let habit = user_data.find_habit_by_name(name).unwrap().clone();
+    app_data.selected_habit = user_data.find_habit_by_name(name);
+    let habit = user_data.habits[app_data.selected_habit.unwrap()].clone();
 
     s.add_layer(
         Dialog::around(
@@ -92,10 +93,9 @@ fn add_record(s: &mut Cursive) {
             view.add_item_str(record_item_builder(&record));
         });
 
-        let habit_select = s.find_name::<SelectView<String>>("habit_select").unwrap();
-        let habit_id = habit_select.selected_id().unwrap();
         let app_data = s.user_data::<AppData>().unwrap();
         let user_data = &mut app_data.user_data;
+        let habit_id = app_data.selected_habit.unwrap();
 
         user_data.habits[habit_id].records.push(record);
         app_data.unsaved_changes = true;
@@ -325,13 +325,12 @@ fn add_record(s: &mut Cursive) {
 
 fn delete_record(s: &mut Cursive) {
     fn ok(s: &mut Cursive) {
-        let habit_select = s.find_name::<SelectView<String>>("habit_select").unwrap();
-        let habit_id = habit_select.selected_id().unwrap();
         let mut record_select = s.find_name::<SelectView<String>>("record_select").unwrap();
         let selected_id = record_select.selected_id().unwrap();
         record_select.remove_item(selected_id);
         let app_data = s.user_data::<AppData>().unwrap();
         let user_data = &mut app_data.user_data;
+        let habit_id = app_data.selected_habit.unwrap();
         user_data.habits[habit_id].records.remove(selected_id);
         app_data.unsaved_changes = true;
         let habit = user_data.habits[habit_id].clone();
@@ -357,6 +356,8 @@ fn delete_record(s: &mut Cursive) {
 }
 
 fn back(s: &mut Cursive) {
+    let app_data = s.user_data::<AppData>().unwrap();
+    app_data.selected_habit = None;
     app::habits_page::draw_menubar(s);
     s.pop_layer();
 }

@@ -210,10 +210,10 @@ pub struct UserData {
 }
 
 impl UserData {
-    pub fn find_habit_by_name(&self, name: &str) -> Option<&Habit> {
-        for habit in &self.habits {
+    pub fn find_habit_by_name(&self, name: &str) -> Option<usize> {
+        for (i, habit) in self.habits.iter().enumerate() {
             if habit.name == name {
-                return Some(habit);
+                return Some(i);
             }
         }
         None
