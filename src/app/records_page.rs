@@ -75,7 +75,7 @@ fn show_record_info(s: &mut Cursive, info: &str) {
 
 fn record_item_builder(record: &Record) -> String {
     format!(
-        "{}-{}-{}: {:02}:{:02} - {:02}:{:02} - {}",
+        "{}-{}-{}: {:02}:{:02} - {:02}:{:02} | {}",
         record.date.year,
         record.date.month,
         record.date.day,
