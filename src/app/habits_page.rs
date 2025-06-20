@@ -26,7 +26,7 @@ pub fn draw(mut s: CursiveRunnable) {
                 .child(habit_select)
                 .full_screen(),
         )
-        .title("R01_AVALANCHE"),
+        .title("AVALANCHE"),
     );
 
     for habit in &user_data.habits {

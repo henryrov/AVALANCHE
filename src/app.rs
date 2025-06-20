@@ -2,7 +2,7 @@ use cursive::views::{Dialog, LinearLayout, TextView};
 use cursive::Cursive;
 use std::error::Error;
 
-use R01_AVALANCHE::UserData;
+use AVALANCHE::UserData;
 
 pub mod habits_page;
 pub mod records_page;
