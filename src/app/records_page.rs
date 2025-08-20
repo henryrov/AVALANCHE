@@ -69,10 +69,6 @@ fn write_habit_stats(s: &mut Cursive, habit: &Habit) {
     });
 }
 
-fn show_record_info(s: &mut Cursive, info: &str) {
-    s.add_layer(Dialog::info(info));
-}
-
 fn record_item_builder(record: &Record) -> String {
     format!(
         "{}-{}-{}: {:02}:{:02} - {:02}:{:02} | {}",
@@ -87,25 +83,10 @@ fn record_item_builder(record: &Record) -> String {
     )
 }
 
-fn add_record(s: &mut Cursive) {
-    fn add_to_list(s: &mut Cursive, record: Record) {
-        s.call_on_name("record_select", |view: &mut SelectView<String>| {
-            view.add_item_str(record_item_builder(&record));
-        });
-
-        let app_data = s.user_data::<AppData>().unwrap();
-        let user_data = &mut app_data.user_data;
-        let habit_id = app_data.selected_habit.unwrap();
-
-        user_data.habits[habit_id].records.push(record);
-        app_data.unsaved_changes = true;
-
-        let habit = user_data.habits[habit_id].clone();
-
-        s.pop_layer();
-        write_habit_stats(s, &habit);
-    }
-
+fn record_item_builder_dialog<F>(s: &mut Cursive, title: String, on_ok: F)
+where
+    F: 'static + Fn(&mut Cursive, Record) + Send + Sync,
+{
     fn time_from_strings(
         hours_string: String,
         minutes_string: String,
@@ -264,8 +245,8 @@ fn add_record(s: &mut Cursive) {
                 .child(TextView::new("Note:"))
                 .child(EditView::new().with_name("note").fixed_width(30)),
         )
-        .title("New record")
-        .button("Ok", |s| {
+        .title(title)
+        .button("Ok", move |s| {
             let date: Date;
             match parse_date(s) {
                 Ok(result) => {
@@ -315,7 +296,7 @@ fn add_record(s: &mut Cursive) {
                 end_time: end_time,
             };
 
-            add_to_list(s, record);
+            on_ok(s, record);
         })
         .button("Cancel", |s| {
             s.pop_layer();
@@ -323,16 +304,75 @@ fn add_record(s: &mut Cursive) {
     );
 }
 
+
+fn show_record_info(s: &mut Cursive, info: &str) {
+    fn edit_record(s: &mut Cursive, record: Record) {
+        let mut record_select = s.find_name::<SelectView<String>>("record_select").unwrap();
+        let selected_id = record_select.selected_id().unwrap();
+        let app_data = s.user_data::<AppData>().unwrap();
+        let user_data = &mut app_data.user_data;
+        let habit_id = app_data.selected_habit.unwrap();
+        user_data.habits[habit_id].records[selected_id] = record.clone();
+        app_data.unsaved_changes = true;
+
+        record_select.remove_item(selected_id);
+        record_select.insert_item_str(
+            selected_id,
+            record_item_builder(&user_data.habits[habit_id].records[selected_id]),
+        );
+        record_select.set_selection(selected_id);
+
+        let habit = user_data.habits[habit_id].clone();
+        write_habit_stats(s, &habit);
+        s.pop_layer();
+    }
+
+    let info_dialog = Dialog::around(TextView::new(info))
+        .button("Edit", |s| {
+            s.pop_layer();
+            record_item_builder_dialog(s, String::from("Edit record"), edit_record);
+        })
+        .button("Done", |s| {
+            s.pop_layer();
+        });
+
+    s.add_layer(info_dialog);
+}
+
+fn add_record(s: &mut Cursive) {
+    fn add_to_list(s: &mut Cursive, record: Record) {
+        s.call_on_name("record_select", |view: &mut SelectView<String>| {
+            view.add_item_str(record_item_builder(&record));
+        });
+
+        let app_data = s.user_data::<AppData>().unwrap();
+        let user_data = &mut app_data.user_data;
+        let habit_id = app_data.selected_habit.unwrap();
+
+        user_data.habits[habit_id].records.push(record);
+        app_data.unsaved_changes = true;
+
+        let habit = user_data.habits[habit_id].clone();
+
+        s.pop_layer();
+        write_habit_stats(s, &habit);
+    }
+
+    record_item_builder_dialog(s, String::from("New record"), add_to_list);
+}
+
 fn delete_record(s: &mut Cursive) {
     fn ok(s: &mut Cursive) {
         let mut record_select = s.find_name::<SelectView<String>>("record_select").unwrap();
         let selected_id = record_select.selected_id().unwrap();
-        record_select.remove_item(selected_id);
         let app_data = s.user_data::<AppData>().unwrap();
         let user_data = &mut app_data.user_data;
         let habit_id = app_data.selected_habit.unwrap();
+
         user_data.habits[habit_id].records.remove(selected_id);
+        record_select.remove_item(selected_id);
         app_data.unsaved_changes = true;
+
         let habit = user_data.habits[habit_id].clone();
         write_habit_stats(s, &habit);
         s.pop_layer();
