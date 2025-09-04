@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::sync::Arc;
 
 use cursive::traits::*;
 use cursive::views::{Dialog, EditView, LinearLayout, SelectView, TextView};
@@ -9,7 +10,7 @@ use crate::app::AppData;
 use crate::{Date, Habit, Record, Time};
 
 pub fn draw(s: &mut Cursive, name: &str) {
-    let record_select = SelectView::<String>::new()
+    let record_select = SelectView::<Record>::new()
         .on_submit(show_record_info)
         .with_name("record_select")
         .scrollable()
@@ -34,8 +35,8 @@ pub fn draw(s: &mut Cursive, name: &str) {
     write_habit_stats(s, &habit);
 
     for record in &habit.records {
-        s.call_on_name("record_select", |view: &mut SelectView<String>| {
-            view.add_item_str(record_item_builder(record));
+        s.call_on_name("record_select", |view: &mut SelectView<Record>| {
+            view.add_item(record_item_builder(record), record.clone());
         });
     }
 
@@ -83,8 +84,12 @@ fn record_item_builder(record: &Record) -> String {
     )
 }
 
-fn record_item_builder_dialog<F>(s: &mut Cursive, title: String, on_ok: F)
-where
+fn record_item_builder_dialog<F>(
+    s: &mut Cursive,
+    title: String,
+    on_ok: F,
+    based_on: Option<Arc<Record>>,
+) where
     F: 'static + Fn(&mut Cursive, Record) + Send + Sync,
 {
     fn time_from_strings(
@@ -181,6 +186,7 @@ where
         }
     }
 
+    // Build UI for entering record info
     let date_row = LinearLayout::horizontal()
         .child(
             EditView::new()
@@ -302,12 +308,47 @@ where
             s.pop_layer();
         }),
     );
+
+    // If editing a record, populate fields with existing info
+    if let Some(record) = based_on {
+        s.call_on_name("date_year", |view: &mut EditView| {
+            view.set_content(record.date.year.to_string())
+        })
+        .unwrap();
+        s.call_on_name("date_month", |view: &mut EditView| {
+            view.set_content(record.date.month.to_string())
+        })
+        .unwrap();
+        s.call_on_name("date_day", |view: &mut EditView| {
+            view.set_content(record.date.day.to_string())
+        })
+        .unwrap();
+        s.call_on_name("start_time_hours", |view: &mut EditView| {
+            view.set_content(record.start_time.hours.to_string())
+        })
+        .unwrap();
+        s.call_on_name("start_time_minutes", |view: &mut EditView| {
+            view.set_content(record.start_time.minutes.to_string())
+        })
+        .unwrap();
+        s.call_on_name("end_time_hours", |view: &mut EditView| {
+            view.set_content(record.end_time.hours.to_string())
+        })
+        .unwrap();
+        s.call_on_name("end_time_minutes", |view: &mut EditView| {
+            view.set_content(record.end_time.minutes.to_string())
+        })
+        .unwrap();
+        s.call_on_name("note", |view: &mut EditView| {
+            view.set_content(record.note.clone())
+        })
+        .unwrap();
+    }
 }
 
-
-fn show_record_info(s: &mut Cursive, info: &str) {
+fn show_record_info(s: &mut Cursive, record: &Record) {
     fn edit_record(s: &mut Cursive, record: Record) {
-        let mut record_select = s.find_name::<SelectView<String>>("record_select").unwrap();
+        let mut record_select = s.find_name::<SelectView<Record>>("record_select").unwrap();
         let selected_id = record_select.selected_id().unwrap();
         let app_data = s.user_data::<AppData>().unwrap();
         let user_data = &mut app_data.user_data;
@@ -316,9 +357,10 @@ fn show_record_info(s: &mut Cursive, info: &str) {
         app_data.unsaved_changes = true;
 
         record_select.remove_item(selected_id);
-        record_select.insert_item_str(
+        record_select.insert_item(
             selected_id,
             record_item_builder(&user_data.habits[habit_id].records[selected_id]),
+            user_data.habits[habit_id].records[selected_id].clone(),
         );
         record_select.set_selection(selected_id);
 
@@ -327,10 +369,12 @@ fn show_record_info(s: &mut Cursive, info: &str) {
         s.pop_layer();
     }
 
-    let info_dialog = Dialog::around(TextView::new(info))
+    let info_dialog = Dialog::around(TextView::new(record_item_builder(&record)))
         .button("Edit", |s| {
+            let record_select = s.find_name::<SelectView<Record>>("record_select").unwrap();
+            let record = record_select.selection().unwrap();
             s.pop_layer();
-            record_item_builder_dialog(s, String::from("Edit record"), edit_record);
+            record_item_builder_dialog(s, String::from("Edit record"), edit_record, Some(record));
         })
         .button("Done", |s| {
             s.pop_layer();
@@ -341,8 +385,8 @@ fn show_record_info(s: &mut Cursive, info: &str) {
 
 fn add_record(s: &mut Cursive) {
     fn add_to_list(s: &mut Cursive, record: Record) {
-        s.call_on_name("record_select", |view: &mut SelectView<String>| {
-            view.add_item_str(record_item_builder(&record));
+        s.call_on_name("record_select", |view: &mut SelectView<Record>| {
+            view.add_item(record_item_builder(&record), record.clone());
         });
 
         let app_data = s.user_data::<AppData>().unwrap();
@@ -358,12 +402,12 @@ fn add_record(s: &mut Cursive) {
         write_habit_stats(s, &habit);
     }
 
-    record_item_builder_dialog(s, String::from("New record"), add_to_list);
+    record_item_builder_dialog(s, String::from("New record"), add_to_list, None);
 }
 
 fn delete_record(s: &mut Cursive) {
     fn ok(s: &mut Cursive) {
-        let mut record_select = s.find_name::<SelectView<String>>("record_select").unwrap();
+        let mut record_select = s.find_name::<SelectView<Record>>("record_select").unwrap();
         let selected_id = record_select.selected_id().unwrap();
         let app_data = s.user_data::<AppData>().unwrap();
         let user_data = &mut app_data.user_data;
@@ -378,7 +422,7 @@ fn delete_record(s: &mut Cursive) {
         s.pop_layer();
     }
 
-    let record_select = s.find_name::<SelectView<String>>("record_select").unwrap();
+    let record_select = s.find_name::<SelectView<Record>>("record_select").unwrap();
     let selected_id = record_select.selected_id();
     match selected_id {
         None => s.add_layer(Dialog::info("Nothing selected")),
